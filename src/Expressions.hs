@@ -1,13 +1,11 @@
-sampleInput = "deriv(x, x * y)" -- => y + x * y'
-sampleInput2 = "deriv(x, x * lambda)" -- => lambda
-sampleInput3 = "sin(5 + x) / (deriv(x, 2x^2))"
+sampleInput = "deriv(x, x * y)"
+sampleInput2 = "sin(5 + x) / (deriv(x, x^2))"
 
-data Con = Con Char Char [Char] -- "lambda"
-data Var = Var Char [Char] -- "x1"
-data Op = Op [String]  -- "+ - *"
-data Arg = Var | Con | Expr -- x1 | lambda | tbd
-data Term = Var | Con [Args] -- x1 | x1 * y
-data Expr = Expr Term [(Op, Term)] 
+data Exp = Var String -- x,y
+    | ConstN Double -- 3,5,2
+    | TermFunc String [Exp] -- sin, deriv w/ args, lambda
+    | TermOp String Exp Exp deriving (Eq, Show) -- -,+,*,/ with args
 
-newtype Exp = Compose [Atom] deriving Eq
-data Atom = Var String | Con String [Exp] deriving Eq
+
+sampleInput1 => TermFunc "deriv" [Var "x", TermOp "*" Var "x" Var "y"]
+sampleInput2 => TermOp "/" (TermFunc "sin" [TermOp "+" ConstN 5 Var "x"]) (TermFunc "deriv" [Var "x", TermOp "^" Var "x" ConstN 2])
