@@ -9,9 +9,9 @@ import Data.Void
 
 type Parser = Parsec Void String
 
--- may need to switch order on these
 expr :: Parser Expr
-expr = var <|> constN <|> termFunc <|> termOp
+expr = ("(" *> exprs <* ")") <|> exprs
+  where exprs = termOp <|> termFunc <|> var <|> constN
 
 -- x, y2
 var :: Parser Expr
@@ -26,7 +26,10 @@ constN = ConstN <$> decimal
 
 -- sin(x, 5*x^2)
 termFunc :: Parser Expr
-termFunc = TermFunc <$> func <*> many expr -- instead of many expr, parse parens and commas
+termFunc = TermFunc <$> func <*> (("(" *> exprArgs <* ")") <|> exprArgs)
+
+exprArgs :: Parser [Expr]
+exprArgs = try $ sepBy expr (char ',' <* space)
 
 -- sin, lambda, 
 func :: Parser String
@@ -39,10 +42,10 @@ func = try $
 -- x+y, 124 * lambda
 termOp :: Parser Expr
 termOp = try $
-    do expr1 <- expr <* space
+    do expr1 <- (constN <|> termFunc <|> var) <* space -- how do we handle (x+y)+z? The recursion keeps breaking it. "expr1 <- expr <*space" doesn't work
        op <- operator <* space
        expr2 <- expr
        return (TermOp op expr1 expr2)
     
 operator :: Parser String
-operator = "+" <|> "*" <|> "/" <|> "-"
+operator = "+" <|> "*" <|> "/" <|> "-" <|> "^"
