@@ -9,22 +9,24 @@ import Data.Void
 
 type Parser = Parsec Void String
 
--- sampleInput = "deriv(x, x * y)"
--- sampleInput2 = "sin(5 + x) / (deriv(x, x^2))"
-
+-- may need to switch order on these
 expr :: Parser Expr
-expr =
-        Var <$> var
-    <|> ConstN <$> decimal
-    <|> TermFunc <$> func <*> many expr
-    <|> TermOp <$> operator <*> expr <*> expr
+expr = var <|> constN <|> termFunc <|> termOp
 
 -- x, y2
-var :: Parser String
+var :: Parser Expr
 var = try $
     do c <- letterChar
        rest <- many digitChar
-       return (c:rest) 
+       return (Var (c:rest))
+
+-- 5, 78
+constN :: Parser Expr
+constN = ConstN <$> decimal
+
+-- sin(x, 5*x^2)
+termFunc :: Parser Expr
+termFunc = TermFunc <$> func <*> many expr -- instead of many expr, parse parens and commas
 
 -- sin, lambda, 
 func :: Parser String
@@ -34,5 +36,13 @@ func = try $
        rest <- many alphaNumChar
        return (c1:c2:rest)
 
+-- x+y, 124 * lambda
+termOp :: Parser Expr
+termOp = try $
+    do expr1 <- expr <* space
+       op <- operator <* space
+       expr2 <- expr
+       return (TermOp op expr1 expr2)
+    
 operator :: Parser String
 operator = "+" <|> "*" <|> "/" <|> "-"
