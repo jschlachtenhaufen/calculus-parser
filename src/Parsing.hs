@@ -9,9 +9,13 @@ import Data.Void
 
 type Parser = Parsec Void String
 
-expr :: Parser Expr
-expr = ("(" *> exprs <* ")") <|> exprs
-  where exprs = termOp <|> termFunc <|> var <|> constN
+expr = term >>= rest
+    where rest e1 = do {p <- space *> operator <* space;
+                        e2 <- term;
+                        rest (TermOp p e1 e2)} <|> return e1
+  
+term = ("(" *> terms <* ")") <|> terms
+  where terms = termOp <|> termFunc <|> var <|> constN
 
 -- x, y2
 var :: Parser Expr
