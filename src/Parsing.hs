@@ -71,3 +71,6 @@ mulop =  "*" <|> "/"
 
 powop :: Parser String
 powop =  "^"
+
+upto :: Char -> Parser String
+upto c = (char c *> return []) <|> ((:) <$> anySingle <*> upto c) 

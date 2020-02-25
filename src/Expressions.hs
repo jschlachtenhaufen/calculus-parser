@@ -1,6 +1,7 @@
 module Expressions where
 
-sampleInput = "deriv(x, x * y)"
+sampleInput1, sampleInput2 :: String
+sampleInput1 = "deriv(x, x * y)"
 sampleInput2 = "sin(5 + x) / (deriv(x, x^2))"
 
 data Expr = 

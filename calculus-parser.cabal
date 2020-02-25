@@ -30,6 +30,7 @@ library
       Expressions
       Parsing
       Utility
+      Laws
   other-modules:
       Paths_calculus_parser
   hs-source-dirs:
