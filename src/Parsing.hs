@@ -10,9 +10,9 @@ import Data.Void
 type Parser = Parsec Void String
 
 expr = term >>= rest
-    where rest e1 = do {p <- space *> operator <* space;
+    where rest e1 = do {op <- space *> operator <* space;
                         e2 <- term;
-                        rest (TermOp p e1 e2)} <|> return e1
+                        rest (TermOp op e1 e2)} <|> return e1
   
 term = ("(" *> expr <* ")") <|> termFunc <|> var <|> constN
 
