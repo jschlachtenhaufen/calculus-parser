@@ -10,12 +10,12 @@ import Data.Void
 type Parser = Parsec Void String
 
 expr = term >>= rest
-    where rest e1 = do {p <- space *> operator <* space;
+    where rest e1 = do {op <- space *> operator <* space;
                         e2 <- term;
-                        rest (TermOp p e1 e2)} <|> return e1
+                        rest (TermOp op e1 e2)} <|> return e1
   
 term = ("(" *> terms <* ")") <|> terms
-  where terms = termOp <|> termFunc <|> var <|> constN
+  where terms = termFunc <|> var <|> constN
 
 -- x, y2
 var :: Parser Expr
@@ -42,14 +42,6 @@ func = try $
        c2 <- letterChar
        rest <- many alphaNumChar
        return (c1:c2:rest)
-
--- x+y, 124 * lambda
-termOp :: Parser Expr
-termOp = try $
-    do expr1 <- (constN <|> termFunc <|> var) <* space -- how do we handle (x+y)+z? The recursion keeps breaking it. "expr1 <- expr <*space" doesn't work
-       op <- operator <* space
-       expr2 <- expr
-       return (TermOp op expr1 expr2)
     
 operator :: Parser String
 operator = "+" <|> "*" <|> "/" <|> "-" <|> "^"
