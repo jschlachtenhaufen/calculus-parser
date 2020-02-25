@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Expressions where
 
+import Parsing
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import Text.Megaparsec.Char.Lexer (decimal)
 import Data.Void
-
 
 sampleInput1, sampleInput2 :: String
 sampleInput1 = "deriv(x, x * y)"
@@ -17,24 +17,22 @@ data Expr =
     | TermFunc String [Expr] -- sin, deriv w/ args, lambda
     | TermOp String Expr Expr deriving (Eq, Show) -- -,+,*,/ with args
 
-type Parser = Parsec Void String
-
 expr :: Parser Expr
-expr = ((factor >>= third) >>= second) >>= first
+expr =  ((factor >>= third) >>= second) >>= first
 
 factor :: Parser Expr
-factor = ("(" *> expr <* ")") <|> termFunc <|> var <|> constN
+factor = spaceAround (parens expr <|> termFunc <|> var <|> constN)
 
 -- first, second, third in order of operation precedence
 first :: Expr -> Parser Expr
-first e1 = do {op <- space *> addop <* space;
+first e1 = do {op <- addop;
                e2 <- (factor >>= second);
                first (TermOp op e1 e2)} <|> return e1
 
 second :: Expr -> Parser Expr
 second e1 = do {op <- mulop;
                 e2 <- (factor >>= third);
-                second (TermOp op e1 e2)} <|> return e1
+                second (TermOp op e1 e2)} <|> (third e1) <|> return e1
 
 third :: Expr -> Parser Expr
 third e1 = do {op <- powop;
@@ -43,10 +41,9 @@ third e1 = do {op <- powop;
 
 -- x, y2
 var :: Parser Expr
-var = -- try $
-    do c <- letterChar
-       rest <- many digitChar
-       return (Var (c:rest))
+var = do c <- letterChar
+         rest <- many digitChar
+         return (Var (c:rest))
 
 -- 5, 78
 constN :: Parser Expr
@@ -54,7 +51,7 @@ constN = ConstN <$> decimal
 
 -- sin(x, 5*x^2)
 termFunc :: Parser Expr
-termFunc = TermFunc <$> func <*> (("(" *> exprArgs <* ")") <|> exprArgs)
+termFunc = TermFunc <$> func <*> (parens exprArgs <|> exprArgs)
 
 exprArgs :: Parser [Expr]
 exprArgs = try $ sepBy expr (char ',' <* space)

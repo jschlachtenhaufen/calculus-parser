@@ -31,6 +31,7 @@ library
       Parsing
       Utility
       Laws
+      Calculation
   other-modules:
       Paths_calculus_parser
   hs-source-dirs:
