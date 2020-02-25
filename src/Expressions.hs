@@ -8,7 +8,3 @@ data Expr =
     | ConstN Double -- 3,5,2
     | TermFunc String [Expr] -- sin, deriv w/ args, lambda
     | TermOp String Expr Expr deriving (Eq, Show) -- -,+,*,/ with args
-
-
--- sampleInput1 => TermFunc "deriv" [Var "x", TermOp "*" Var "x" Var "y"]
--- sampleInput2 => TermOp "/" (TermFunc "sin" [TermOp "+" ConstN 5 Var "x"]) (TermFunc "deriv" [Var "x", TermOp "^" Var "x" ConstN 2])
