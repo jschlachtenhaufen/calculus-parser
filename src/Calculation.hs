@@ -6,12 +6,10 @@ import Expressions
 
 data Calculation = Calc Expr [Step] deriving Show
 data Step = Step String Expr deriving Show
-
-input = ""
+type Substitution = [(String, Expr)]
 
 addLaw = parseMaybe law addition
 expr1 = parseMaybe expr sampleInput1
-ex2 = TermFunc "sin" [Var "x",TermOp "+" (Var "a") (Var "b")]
 
 c1 :: Maybe Law -> Maybe Expr -> Calculation
 c1 Nothing _ = undefined
@@ -25,7 +23,6 @@ calculate laws e = Calc e (manyStep rws e)
                   e' <- rewrites eq e,
                   e' /= e ]
 
-
 manyStep :: (Expr -> [Step]) -> Expr -> [Step]
 manyStep rws e
  = case steps of
@@ -33,39 +30,60 @@ manyStep rws e
  (o@(Step _ e) : _) -> o:manyStep rws e
  where steps = rws e
 
-anyOne :: (a -> [a]) -> [a] -> [[a]] 
-anyOne f [] = []
-anyOne f (x:xs) = [x':xs | x' <- f x] ++
-                  [x:xs' | xs' <- anyOne f xs]
+outer :: Expr -> [Expr]
+outer a = a : possibleSubexpressions a
 
--- splits :: [a] -> [([a],[a])]
--- splits [] = [([],[])] 
--- splits (a:as) = [([],a:as)] ++ [(a:as1,as2) | (as1,as2) <- splits as]
--- splits as = [(take n as,drop n as) | n <- [0..length as]]
+possibleSubexpressions :: Expr -> [Expr]
+possibleSubexpressions (Var _) = []
+possibleSubexpressions (ConstN _) = []
+possibleSubexpressions (TermFunc func exprs) = concatMap outer exprs
+possibleSubexpressions (TermOp op e1 e2) = outer e1 ++ outer e2
 
--- splits3 as = [(as1,as2,as3) | (as1,bs) <- splits as, (as2,as3) <- splits bs] 
+matchExprs :: Expr -> Expr -> [Substitution]
+matchExprs (Var a) e = [[(a, e)]]
+matchExprs (ConstN _) _ = []
+matchExprs (TermFunc f1 es1) (TermFunc f2 es2) 
+  = if f1 == f2 then combine (zipWith matchExprs es1 es2)
+    else []
+matchExprs (TermFunc f1 es) _ = []
+
+matchExprs (TermOp op1 e1 e2) (TermOp op2 e3 e4)
+  = if op1 == op2 then combine (zipWith matchExprs [e1, e2] [e3, e4])
+    else []
+matchExprs (TermOp op e1 e2) _ = []
+
+rewrites :: Equation -> Expr -> [Expr]
+rewrites (Equation (eqL, eqR)) e = [apply sub eqR | sub <- matchExprs eqL e]
+
+apply :: Substitution -> Expr -> Expr
+apply sub (Var a) = find a sub 
+
+find :: String -> Substitution -> Expr
+find name (((name2, e):tail)) =
+  if name == name2 then e
+  else find name tail
+find name [] = Var name
+
+combine :: [[Substitution]] -> [Substitution] 
+combine = filterUnifiable . cp
+filterUnifiable = concatMap unifyAll
+
+cp :: [[a]] -> [[a]]
+cp [] = [[]]
+cp (xs:xss) = [x:ys | x <- xs, ys <- cp xss]
+
+unifyAll :: [Substitution] -> [Substitution]
+unifyAll = foldr f [] -- TODO this was foldr f e
+ where f sub subs = concatMap (unify sub) subs
+
+unify :: Substitution -> Substitution -> [Substitution]
+unify s1 s2 = if compatible s1 s2 then [s1 ++ s2] else []
+
+compatible :: Substitution -> Substitution -> Bool
+compatible sub1 sub2
+ = and [e1 == e2 | (v1, e1) <- sub1, (v2, e2) <- sub2, v1==v2] 
 
 
-{-
-  eqn: deriv(x, sin(a)) = deriv(x, a) * cos(a)
-  expression: 4
--}
-
-
-rewrites eqn as = rewritesSeg eqn as ++ anyOne (rewritesA eqn) as
-
-
-
--- outer :: Expr -> [Expr]
--- outer a = a : possibleSubexpressions a
-
--- possibleSubexpressions :: Expr -> [Expr]
--- possibleSubexpressions (Var _) = []
--- possibleSubexpressions (ConstN _) = []
--- possibleSubexpressions (TermFunc func exprs) = concatMap outer exprs
--- possibleSubexpressions (TermOp op e1 e2) = outer e1 ++ outer e2
-
--- rewrites :: Eqution -> Expr -> [Expr]
 
 -- rewrites :: Equation -> Expr -> [Expr] 
 -- -- rewrites eqn (e)
@@ -123,24 +141,28 @@ rewrites eqn as = rewritesSeg eqn as ++ anyOne (rewritesA eqn) as
 --  | otherwise = binding sub v
 -- binding [] v = error “Could not find binding”
 
--- combine :: [[Subst]] -> [Subst] 
--- combine = filterUnifiable . cp
--- filterUnifiable = concatMap unifyAll
--- unifyAll :: [Subst] -> [Subst] 
+-- anyOne :: (a -> [a]) -> [a] -> [[a]] 
+-- anyOne f [] = []
+-- anyOne f (x:xs) = [x':xs | x' <- f x] ++
+--                   [x:xs' | xs' <- anyOne f xs]
 
--- cp :: [[a]] -> [[a]], cp [] = [[]]
--- cp (xs:xss) = [x:ys | x <- xs, ys <- cp xss]
+-- splits :: [a] -> [([a],[a])]
+-- splits [] = [([],[])] 
+-- splits (a:as) = [([],a:as)] ++ [(a:as1,as2) | (as1,as2) <- splits as]
+-- splits as = [(take n as,drop n as) | n <- [0..length as]]
 
--- unifyAll :: [Subst] -> [Subst]
--- unifyAll = foldr f e
---  where f sub subs = concatMap (unify sub) subs
-
--- unify :: Subst -> Subst -> [Subst]
--- unify s1 s2 = if compatible s1 s2 then [s1 ++ s2] else []
-
--- compatible :: Subst -> Subst -> Bool
--- compatible sub1 sub2
---  = and [e1 == e2 | (v1, e1) <- sub1, (v2, e2) <-sub, v1==v2) 
+-- splits3 as = [(as1,as2,as3) | (as1,bs) <- splits as, (as2,as3) <- splits bs] 
 
 
--- testEqn = Equation (Var "x", Var "y")
+{-
+  eqn: deriv(x, sin(a)) = deriv(x, a) * cos(a)
+  expression: 4
+-}
+
+
+-- combine check if they're compatible, make sure x is subbed by same stuff everywhere for example
+
+
+-- TermFunc "deriv" [Var "x",TermOp "+" (Var "a") (Var "b")]   => TermFunc "deriv" [Var "x",TermOp "+" Expr a1 Expr a2]
+
+-- sin(x)   sin(b)

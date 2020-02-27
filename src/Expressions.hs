@@ -8,7 +8,7 @@ import Text.Megaparsec.Char.Lexer (decimal)
 import Data.Void
 
 sampleInput1, sampleInput2 :: String
-sampleInput1 = "deriv(x, x * y)"
+sampleInput1 = "deriv(x, a + b)"
 sampleInput2 = "sin(5 + x) / (deriv(x, x^2))"
 
 data Expr = 
