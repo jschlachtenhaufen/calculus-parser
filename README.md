@@ -19,3 +19,7 @@ Currently, our possibleSubexpressions/outer function decomposes an expression bu
 `Calc (TermFunc "deriv" [Var "x",TermOp "+" (Var "x") (Var "y")]) [Step "addition" (TermOp "+" (TermFunc "deriv" [Var "x",Var "x"]) (TermFunc "deriv" [Var "x",Var "y"])),Step "self" (ConstN 1.0)]`
 
 So it appear to us that our rewrites function is correctly moving through the expression tree and applying the laws, do you have any advice on keeping track of the context of the subexpressions in the original expression. We think this logic belongs in the possibleSubexpressions/outer function but are unsure what the output of a simple input should look like.
+
+## Testing:
+
+To test run `stack run` and then an expression such as `deriv(x, x+y)`
