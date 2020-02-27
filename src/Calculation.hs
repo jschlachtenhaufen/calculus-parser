@@ -4,9 +4,19 @@ import Text.Megaparsec
 import Laws
 import Expressions
 
+
+sampleInput1, sampleInput2 :: String
+sampleInput1 = "deriv(y, d + f)"
+sampleInput2 = "sin(5 + x) / (deriv(x, x^2))"
+
 data Calculation = Calc Expr [Step] deriving Show
 data Step = Step String Expr deriving Show
 type Substitution = [(String, Expr)]
+
+testExpr = TermFunc "deriv" [Var "x",TermOp "+" (Var "a") (Var "b")]
+testExpr2 = TermFunc "deriv" [Var "y",TermOp "+" (Var "c") (Var "c")]
+testLaw = Law "addition" (Equation (TermFunc "deriv" [Var "x",TermOp "+" (Var "a") (Var "b")],TermOp "+" (TermFunc "deriv" [Var "x",Var "a"]) (TermFunc "deriv" [Var "x",Var "b"])))
+testEqn = Equation (TermFunc "deriv" [Var "x",TermOp "+" (Var "a") (Var "b")],TermOp "+" (TermFunc "deriv" [Var "x",Var "a"]) (TermFunc "deriv" [Var "x",Var "b"]))
 
 addLaw = parseMaybe law addition
 expr1 = parseMaybe expr sampleInput1
@@ -56,7 +66,10 @@ rewrites :: Equation -> Expr -> [Expr]
 rewrites (Equation (eqL, eqR)) e = [apply sub eqR | sub <- matchExprs eqL e]
 
 apply :: Substitution -> Expr -> Expr
-apply sub (Var a) = find a sub 
+apply sub (Var a) = find a sub
+apply sub (ConstN c) = (ConstN c)
+apply sub (TermFunc func es) = (TermFunc func (map (apply sub) es))
+apply sub (TermOp op e1 e2) = (TermOp op (apply sub e1) (apply sub e2))
 
 find :: String -> Substitution -> Expr
 find name (((name2, e):tail)) =
@@ -73,7 +86,7 @@ cp [] = [[]]
 cp (xs:xss) = [x:ys | x <- xs, ys <- cp xss]
 
 unifyAll :: [Substitution] -> [Substitution]
-unifyAll = foldr f [] -- TODO this was foldr f e
+unifyAll = foldr f [[]] -- TODO this was foldr f e
  where f sub subs = concatMap (unify sub) subs
 
 unify :: Substitution -> Substitution -> [Substitution]
