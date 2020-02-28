@@ -17,9 +17,9 @@ expr :: Parser Expr
 expr =  factor >>= third >>= second >>= first
 
 factor :: Parser Expr
-factor = spaceAround neg
-    where neg = do {_ <- space *> "-"; -- parse things like "5 ^ -sin(x)"
-                    ((TermOp "*" (ConstN (-1))) <$> term)} <|> term
+factor = spaceAround negOrPos
+    where negOrPos = do {_ <- space *> "-"; -- parse things like "5 ^ -sin(x)"
+                         ((TermOp "*" (ConstN (-1))) <$> term)} <|> term
   
 term :: Parser Expr
 term = parens expr <|> termFunc <|> var <|> constN

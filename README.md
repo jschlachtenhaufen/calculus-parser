@@ -9,11 +9,7 @@ Current plan:
 
 ## Derivative Reasoning Update
 
-Currently, our possibleSubexpressions/outer function decomposes an expression but loses context of where the subexpression belongs. For examples `deriv(x, x+y)` will apply the addition rule and identify an application of the self rule (derive(x,x) = 1), but won't substitute that application of back into the original application: 
-
-`Calc (TermFunc "deriv" [Var "x",TermOp "+" (Var "x") (Var "y")]) [Step "addition" (TermOp "+" (TermFunc "deriv" [Var "x",Var "x"]) (TermFunc "deriv" [Var "x",Var "y"])),Step "self" (ConstN 1.0)]`
-
-So it appear to us that our rewrites function is correctly moving through the expression tree and applying the laws, do you have any advice on keeping track of the context of the subexpressions in the original expression. We think this logic belongs in the possibleSubexpressions/outer function but are unsure what the output of a simple input should look like.
+At this point we believe that most the derivative reasoning is working appropriately. Our one concern is how we handle the matching of the constant law. In the `matchExprs` functions in `Calculation.hs` we basically hard code our constants law to pattern match on constN variables and termFunc variables applied to an empty list. We figured there must be a better way to do this. We were having trouble with this law because the pattern matching is less trivial since the matching depends on more than just the type but the actual variable contents.
 
 ## Testing:
 
