@@ -14,21 +14,27 @@ data Expr =
     | TermOp String Expr Expr deriving (Eq, Show) -- -,+,*,/ with args
 
 expr :: Parser Expr
-expr =  ((factor >>= third) >>= second) >>= first
+expr =  factor >>= third >>= second >>= first
 
 factor :: Parser Expr
-factor = spaceAround (parens expr <|> termFunc <|> var <|> constN)
+factor = term
+-- factor = ("-"((TermOp "*" (ConstN "-1")) <$> "-" *> term) <|> term
+-- factor = do {_ <- "-";
+--             ((TermOp "*" (ConstN "-1")) <$> term)} <|> return term
+  
+term :: Parser Expr
+term = spaceAround (parens expr <|> termFunc <|> var <|> constN)
 
 -- first, second, third in order of operation precedence
 first :: Expr -> Parser Expr
 first e1 = do {op <- addop;
-               e2 <- (factor >>= second);
+               e2 <- (factor >>= third >>= second);
                first (TermOp op e1 e2)} <|> return e1
 
 second :: Expr -> Parser Expr
 second e1 = do {op <- mulop;
                 e2 <- (factor >>= third);
-                second (TermOp op e1 e2)} <|> (third e1) <|> return e1
+                second (TermOp op e1 e2)} <|> return e1
 
 third :: Expr -> Parser Expr
 third e1 = do {op <- powop;
@@ -49,9 +55,6 @@ constN = ConstN <$> decimal
 termFunc :: Parser Expr
 termFunc = TermFunc <$> func <*> (parens exprArgs <|> exprArgs)
 
-exprArgs :: Parser [Expr]
-exprArgs = try $ sepBy expr (char ',' <* space)
-
 -- sin, lambda, 
 func :: Parser String
 func = try $ 
@@ -59,6 +62,10 @@ func = try $
        c2 <- letterChar
        rest <- many alphaNumChar
        return (c1:c2:rest)
+
+-- comma seperated exprs inside the brackets of a function
+exprArgs :: Parser [Expr]
+exprArgs = try $ sepBy expr (char ',' <* space)
 
 addop :: Parser String
 addop = "+" <|> "-"

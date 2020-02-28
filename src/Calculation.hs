@@ -14,7 +14,7 @@ data Step = Step String Expr deriving Show
 type Substitution = [(String, Expr)]
 
 testExpr = TermFunc "deriv" [Var "x",TermOp "+" (Var "a") (Var "b")]
-testExpr2 = TermFunc "deriv" [Var "y",TermOp "+" (Var "c") (Var "c")]
+testExpr2 = TermFunc "deriv" [Var "y",TermOp "+" (TermOp "+" (Var "a") (Var "b")) (Var "c")]
 testLaw = Law "addition" (Equation (TermFunc "deriv" [Var "x",TermOp "+" (Var "a") (Var "b")],TermOp "+" (TermFunc "deriv" [Var "x",Var "a"]) (TermFunc "deriv" [Var "x",Var "b"])))
 testEqn = Equation (TermFunc "deriv" [Var "x",TermOp "+" (Var "a") (Var "b")],TermOp "+" (TermFunc "deriv" [Var "x",Var "a"]) (TermFunc "deriv" [Var "x",Var "b"]))
 
@@ -30,7 +30,7 @@ calculate :: [Law] -> Expr -> Calculation
 calculate laws e = Calc e (manyStep rws e)
   where rws e = [ Step name e' 
                 | Law name eq <- laws, 
-                  e' <- rewrites eq e,
+                  e' <- rewrites (Law name eq) e,
                   e' /= e ]
 
 manyStep :: (Expr -> [Step]) -> Expr -> [Step]
@@ -40,30 +40,37 @@ manyStep rws e
  (o@(Step _ e) : _) -> o:manyStep rws e
  where steps = rws e
 
-outer :: Expr -> [Expr]
-outer a = a : possibleSubexpressions a
+matchExprs :: String -> Expr -> Expr -> [Substitution]
+matchExprs "constants" (Var a) (ConstN c) = [[(a, (ConstN c))]]
+matchExprs "constants" (Var a) (TermFunc func []) = [[(a, (TermFunc func []))]]
+matchExprs "constants" (Var a) _ = []
 
-possibleSubexpressions :: Expr -> [Expr]
-possibleSubexpressions (Var _) = []
-possibleSubexpressions (ConstN _) = []
-possibleSubexpressions (TermFunc func exprs) = concatMap outer exprs
-possibleSubexpressions (TermOp op e1 e2) = outer e1 ++ outer e2
-
-matchExprs :: Expr -> Expr -> [Substitution]
-matchExprs (Var a) e = [[(a, e)]]
-matchExprs (ConstN _) _ = []
-matchExprs (TermFunc f1 es1) (TermFunc f2 es2) 
-  = if f1 == f2 then combine (zipWith matchExprs es1 es2)
+matchExprs _ (Var a) e = [[(a, e)]]
+matchExprs _ (ConstN _) _ = []
+matchExprs a (TermFunc f1 es1) (TermFunc f2 es2) 
+  = if f1 == f2 then combine (zipWith (matchExprs a) es1 es2)
     else []
-matchExprs (TermFunc f1 es) _ = []
+matchExprs _ (TermFunc f1 es) _ = []
 
-matchExprs (TermOp op1 e1 e2) (TermOp op2 e3 e4)
-  = if op1 == op2 then combine (zipWith matchExprs [e1, e2] [e3, e4])
+matchExprs a (TermOp op1 e1 e2) (TermOp op2 e3 e4)
+  = if op1 == op2 then combine (zipWith (matchExprs a) [e1, e2] [e3, e4])
     else []
-matchExprs (TermOp op e1 e2) _ = []
+matchExprs _ (TermOp op e1 e2) _ = []
 
-rewrites :: Equation -> Expr -> [Expr]
-rewrites (Equation (eqL, eqR)) e = [apply sub eqR | subs <- map (matchExprs eqL) (outer e), sub <- subs]
+
+rewrites :: Law -> Expr -> [Expr]
+rewrites (Law name (Equation (eqL, eqR))) e = [apply sub eqR | sub <- matchExprs name eqL e] ++ rewriteSubExpressions (Law name (Equation (eqL, eqR))) e
+
+rewriteSubExpressions :: Law -> Expr -> [Expr]
+rewriteSubExpressions _ (Var _) = []
+rewriteSubExpressions _ (ConstN _) = []
+rewriteSubExpressions law (TermFunc func es) = map (TermFunc func) (anyOne (rewrites law) es)
+rewriteSubExpressions law (TermOp op e1 e2) =  [TermOp op (args!!0) (args!!1) | args <- (anyOne (rewrites law) [e1, e2])]
+
+anyOne :: (a -> [a]) -> [a] -> [[a]]
+anyOne f [] = []
+anyOne f (x:xs) = [x':xs | x' <- f x] ++
+                  [x:xs' | xs' <- anyOne f xs]
 
 apply :: Substitution -> Expr -> Expr
 apply sub (Var a) = find a sub
@@ -78,7 +85,9 @@ find name (((name2, e):tail)) =
 find name [] = Var name
 
 combine :: [[Substitution]] -> [Substitution] 
-combine = filterUnifiable . cp
+combine [] = []
+combine subs = (filterUnifiable . cp) subs
+
 filterUnifiable = concatMap unifyAll
 
 cp :: [[a]] -> [[a]]
@@ -86,7 +95,7 @@ cp [] = [[]]
 cp (xs:xss) = [x:ys | x <- xs, ys <- cp xss]
 
 unifyAll :: [Substitution] -> [Substitution]
-unifyAll = foldr f [[]] -- TODO this was foldr f e
+unifyAll = foldr f [[]]
  where f sub subs = concatMap (unify sub) subs
 
 unify :: Substitution -> Substitution -> [Substitution]

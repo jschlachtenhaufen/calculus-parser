@@ -15,7 +15,8 @@ cos = "cos: deriv(x, cos(a)) = deriv(x, a) * -sin(a)" -- how are we dealing with
 ln = "ln: deriv(x, ln(a)) = deriv(x, a) * (1 / a)"
 self = "self: deriv(x, x) = 1"
 power = "power: deriv(x, a ^ b) = a ^ b * deriv(x, (b * ln(a)))"
-constants = "constants: deriv(x, c) = 0" -- if c doesn't depend on x
+constants = "constants: deriv(x, c) = 0"
+-- constantFunc = "constants: deriv(x, (ConstN c)) = 0"
 
 law :: Parser Law
 law = do name <- upto ':'
