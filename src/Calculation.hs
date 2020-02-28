@@ -43,7 +43,7 @@ manyStep rws e
 matchExprs :: String -> Expr -> Expr -> [Substitution]
 matchExprs "constants" (Var a) (ConstN c) = [[(a, (ConstN c))]]
 matchExprs "constants" (Var a) (TermFunc func []) = [[(a, (TermFunc func []))]]
-matchExprs "constants" (Var a) _ = []
+
 
 matchExprs _ (Var a) e = [[(a, e)]]
 matchExprs _ (ConstN _) _ = []
@@ -85,8 +85,7 @@ find name (((name2, e):tail)) =
 find name [] = Var name
 
 combine :: [[Substitution]] -> [Substitution] 
-combine [] = []
-combine subs = (filterUnifiable . cp) subs
+combine = (filterUnifiable . cp)
 
 filterUnifiable = concatMap unifyAll
 
