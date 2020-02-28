@@ -4,27 +4,9 @@ import Text.Megaparsec
 import Laws
 import Expressions
 
-
-sampleInput1, sampleInput2 :: String
-sampleInput1 = "deriv(y, y + f)"
-sampleInput2 = "sin(5 + x) / (deriv(x, x^2))"
-
 data Calculation = Calc Expr [Step] deriving Show
 data Step = Step String Expr deriving Show
 type Substitution = [(String, Expr)]
-
-testExpr = TermFunc "deriv" [Var "x",TermOp "+" (Var "a") (Var "b")]
-testExpr2 = TermFunc "deriv" [Var "y",TermOp "+" (TermOp "+" (Var "a") (Var "b")) (Var "c")]
-testLaw = Law "addition" (Equation (TermFunc "deriv" [Var "x",TermOp "+" (Var "a") (Var "b")],TermOp "+" (TermFunc "deriv" [Var "x",Var "a"]) (TermFunc "deriv" [Var "x",Var "b"])))
-testEqn = Equation (TermFunc "deriv" [Var "x",TermOp "+" (Var "a") (Var "b")],TermOp "+" (TermFunc "deriv" [Var "x",Var "a"]) (TermFunc "deriv" [Var "x",Var "b"]))
-
-addLaw = parseMaybe law addition
-expr1 = parseMaybe expr sampleInput1
-
-c1 :: Maybe Law -> Maybe Expr -> Calculation
-c1 Nothing _ = undefined
-c1 _ Nothing = undefined
-c1 (Just l) (Just e) = calculate [l] e
 
 calculate :: [Law] -> Expr -> Calculation
 calculate laws e = Calc e (manyStep rws e)
@@ -41,9 +23,26 @@ manyStep rws e
  where steps = rws e
 
 matchExprs :: String -> Expr -> Expr -> [Substitution]
-matchExprs "constants" (Var a) (ConstN c) = [[(a, (ConstN c))]]
-matchExprs "constants" (Var a) (TermFunc func []) = [[(a, (TermFunc func []))]]
-matchExprs "constants" (Var a) _ = []
+
+{-
+ these matchExpr definitions to detect derivatives of expressions which reduce to 0 (ConstNs or funs with no args, like "lambda") 
+ seem like we're hardcoding the law into the code. These work correctly, but is there a better way we could approach this? 
+ Also passing the law name through this deep to pattern match "constants" feels awkward
+ -}
+
+-- deriv(x, 12) = 0
+matchExprs "constants" 
+  (TermFunc "deriv" [(Var a), (Var b)]) 
+  (TermFunc "deriv" [(Var c), (ConstN d)]) 
+    = if a == c then [[(b, (ConstN d))]] else []
+
+-- deriv(x, lambda) = 0
+matchExprs "constants" 
+  (TermFunc "deriv" [(Var a), (Var b)]) 
+  (TermFunc "deriv" [(Var c), (TermFunc func [])]) 
+    = if a == c then [[(b, (TermFunc func []))]] else []
+
+matchExprs "constants" _ _ = []
 
 matchExprs _ (Var a) e = [[(a, e)]]
 matchExprs _ (ConstN _) _ = []
@@ -57,9 +56,9 @@ matchExprs a (TermOp op1 e1 e2) (TermOp op2 e3 e4)
     else []
 matchExprs _ (TermOp op e1 e2) _ = []
 
-
 rewrites :: Law -> Expr -> [Expr]
-rewrites (Law name (Equation (eqL, eqR))) e = [apply sub eqR | sub <- matchExprs name eqL e] ++ rewriteSubExpressions (Law name (Equation (eqL, eqR))) e
+rewrites (Law name (Equation (eqL, eqR))) e 
+  = [apply sub eqR | sub <- matchExprs name eqL e] ++ rewriteSubExpressions (Law name (Equation (eqL, eqR))) e
 
 rewriteSubExpressions :: Law -> Expr -> [Expr]
 rewriteSubExpressions _ (Var _) = []
@@ -87,7 +86,6 @@ find name [] = Var name
 combine :: [[Substitution]] -> [Substitution] 
 combine [] = []
 combine subs = (filterUnifiable . cp) subs
-
 filterUnifiable = concatMap unifyAll
 
 cp :: [[a]] -> [[a]]

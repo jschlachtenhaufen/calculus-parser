@@ -12,9 +12,8 @@ main = do putStrLn "Parsing laws:"
           _ <- mapM putStrLn lawStrings
           putStrLn "" >> repl (parseLaws lawStrings)
           
--- error "Non negative inputs only"
 lawStrings :: [String]
-lawStrings = [addition, Laws.product, Laws.sin, power, ln, self, constants] -- doens't have Laws.cos cus of parsing
+lawStrings = [addition, Laws.product, Laws.sin, Laws.cos, power, ln, self, constants]
 
 parseLaws :: [String] -> [Law]
 parseLaws ls = map unwrap (map (parseMaybe law) ls)

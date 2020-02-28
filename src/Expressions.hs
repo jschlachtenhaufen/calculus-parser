@@ -17,13 +17,12 @@ expr :: Parser Expr
 expr =  factor >>= third >>= second >>= first
 
 factor :: Parser Expr
-factor = term
--- factor = ("-"((TermOp "*" (ConstN "-1")) <$> "-" *> term) <|> term
--- factor = do {_ <- "-";
---             ((TermOp "*" (ConstN "-1")) <$> term)} <|> return term
+factor = spaceAround neg
+    where neg = do {_ <- space *> "-"; -- parse things like "5 ^ -sin(x)"
+                    ((TermOp "*" (ConstN (-1))) <$> term)} <|> term
   
 term :: Parser Expr
-term = spaceAround (parens expr <|> termFunc <|> var <|> constN)
+term = parens expr <|> termFunc <|> var <|> constN
 
 -- first, second, third in order of operation precedence
 first :: Expr -> Parser Expr
