@@ -11,7 +11,7 @@ data Expr =
       Var String -- x,y
     | ConstN Double -- 3,5,2
     | TermFunc String [Expr] -- sin, deriv w/ args, lambda
-    | TermOp String Expr Expr deriving (Eq, Show) -- -,+,*,/ with args
+    | TermOp String Expr Expr deriving (Eq) -- -,+,*,/ with args
 
 expr :: Parser Expr
 expr =  factor >>= third >>= second >>= first
@@ -74,3 +74,16 @@ mulop =  "*" <|> "/"
 
 powop :: Parser String
 powop =  "^"
+
+showSpace = showChar ' '
+showsop op = showString op ""
+
+instance Show Expr where
+    show (Var s) = showString s ""
+    show (ConstN d) = show d
+    show (TermFunc s exprs) = showString s  "" ++ showChar '(' "" ++ showExprs exprs ++ showChar ')' ""
+    show (TermOp s e1 e2) = showChar '(' "" ++ show e1 ++ showSpace "" ++ showString s "" ++ showSpace "" ++ show e2 ++ showChar ')' ""
+
+showExprs :: [Expr] -> String
+showExprs [e] = show e
+showExprs (e:es) = show e ++ showChar ',' " " ++ showExprs es
