@@ -15,7 +15,7 @@ main = do args <- getArgs
           let lawList = lines allLaws
           putStrLn "Parsing laws:"
           let laws = map parseLaw lawList
-          putStrLn (show laws)
+          mapM_ putStrLn (map show laws)
           putStrLn "" >> repl laws
           
 
