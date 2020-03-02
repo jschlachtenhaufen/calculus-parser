@@ -4,23 +4,31 @@ import Expressions (expr)
 import Laws
 import Calculation (calculate)
 import Text.Megaparsec
+import System.Environment
 import System.IO (hFlush, stdout)
 import Control.Monad (unless)
 
 main :: IO ()
-main = do putStrLn "Parsing laws:"
-          _ <- mapM putStrLn lawStrings
-          putStrLn "" >> repl (parseLaws lawStrings)
+main = do args <- getArgs
+          let lawsFile = getLawsFile args
+          allLaws <- readFile lawsFile
+          let lawList = lines allLaws
+          putStrLn "Parsing laws:"
+          let laws = map parseLaw lawList
+          putStrLn (show laws)
+          putStrLn "" >> repl laws
           
-lawStrings :: [String]
-lawStrings = [addition, Laws.product, Laws.sin, Laws.cos, power, ln, self, constants]
 
-parseLaws :: [String] -> [Law]
-parseLaws ls = map unwrap (map (parseMaybe law) ls)
+-- either returns first arg as laws file, or default file "app/laws.txt"
+getLawsFile :: [String] -> String
+getLawsFile [] = "app/laws.txt"
+getLawsFile args = args!!0
 
-unwrap :: Maybe Law -> Law
-unwrap Nothing = error "failed to parse inputted law"
-unwrap (Just l) = l
+-- attempts to parse individual law, throwing error if it can't
+parseLaw :: String -> Law
+parseLaw l = case parse law "" l of
+                 Left bundle -> error (errorBundlePretty bundle)
+                 Right parsedLaw -> parsedLaw
 
 repl :: [Law] -> IO ()
 repl laws = do
