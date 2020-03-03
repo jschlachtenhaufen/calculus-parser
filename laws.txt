@@ -6,3 +6,5 @@ ln: deriv(x, ln(a)) = deriv(x, a) * (1 / a)
 self: deriv(x, x) = 1
 power: deriv(x, a ^ b) = a ^ b * deriv(x, (b * ln(a)))
 constants: deriv(x, c) = 0
+test: x + 0 = x
+false: sin(x) = cos(x)

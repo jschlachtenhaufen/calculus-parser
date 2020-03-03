@@ -83,7 +83,7 @@ instance Show Expr where
     show (ConstN d) = show d
     show (TermFunc s []) = showString s ""
     show (TermFunc s exprs) = showString s  "" ++ showChar '(' "" ++ showExprs exprs ++ showChar ')' ""
-    show (TermOp s e1 e2) = showChar '(' "" ++ show e1 ++ showSpace "" ++ showString s "" ++ showSpace "" ++ show e2 ++ showChar ')' ""
+    show (TermOp s e1 e2) = show e1 ++ showSpace "" ++ showString s "" ++ showSpace "" ++ show e2
 
 showExprs :: [Expr] -> String
 showExprs [e] = show e

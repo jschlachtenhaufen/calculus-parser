@@ -21,7 +21,7 @@ main = do args <- getArgs
 
 -- either returns first arg as laws file, or default file "app/laws.txt"
 getLawsFile :: [String] -> String
-getLawsFile [] = "app/laws.txt"
+getLawsFile [] = "laws.txt"
 getLawsFile args = args!!0
 
 -- attempts to parse individual law, throwing error if it can't
