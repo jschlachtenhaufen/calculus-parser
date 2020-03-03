@@ -4,8 +4,8 @@ import Text.Megaparsec
 import Laws
 import Expressions
 
-data Calculation = Calc Expr [Step] deriving Show
-data Step = Step String Expr deriving Show
+data Calculation = Calc Expr [Step] deriving (Show, Eq)
+data Step = Step String Expr deriving (Show, Eq)
 type Substitution = [(String, Expr)]
 
 calculate :: [Law] -> Expr -> Calculation
@@ -23,12 +23,6 @@ manyStep rws e
  where steps = rws e
 
 matchExprs :: String -> Expr -> Expr -> [Substitution]
-
-{-
- these matchExpr definitions to detect derivatives of expressions which reduce to 0 (ConstNs or funs with no args, like "lambda") 
- seem like we're hardcoding the law into the code. These work correctly, but is there a better way we could approach this? 
- Also passing the law name through this deep to pattern match "constants" feels awkward
- -}
 
 -- deriv(x, 12) = 0
 matchExprs "constants" 

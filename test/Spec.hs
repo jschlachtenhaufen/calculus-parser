@@ -1,2 +1,7 @@
+import ExpressionTests
+import CalculationTests
+
+import Test.Tasty
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = do defaultMain (testGroup "Calculus Solver Tests" [expressionTests, calculationTests])

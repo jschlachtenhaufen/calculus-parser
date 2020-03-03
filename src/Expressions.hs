@@ -81,6 +81,7 @@ showsop op = showString op ""
 instance Show Expr where
     show (Var s) = showString s ""
     show (ConstN d) = show d
+    show (TermFunc s []) = showString s ""
     show (TermFunc s exprs) = showString s  "" ++ showChar '(' "" ++ showExprs exprs ++ showChar ')' ""
     show (TermOp s e1 e2) = showChar '(' "" ++ show e1 ++ showSpace "" ++ showString s "" ++ showSpace "" ++ show e2 ++ showChar ')' ""
 
