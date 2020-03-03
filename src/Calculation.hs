@@ -39,6 +39,7 @@ matchExprs "constants"
 matchExprs "constants" _ _ = []
 
 matchExprs _ (Var a) e = [[(a, e)]]
+matchExprs _ (ConstN a) (ConstN b) = if a == b then [[(show a, (ConstN b))]] else []
 matchExprs _ (ConstN _) _ = []
 matchExprs a (TermFunc f1 es1) (TermFunc f2 es2) 
   = if f1 == f2 then combine (zipWith (matchExprs a) es1 es2)
