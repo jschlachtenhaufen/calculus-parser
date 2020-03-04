@@ -4,8 +4,8 @@ import Text.Megaparsec
 import Laws
 import Expressions
 
-data Calculation = Calc Expr [Step] deriving (Show, Eq)
-data Step = Step String Expr deriving (Show, Eq)
+data Calculation = Calc Expr [Step] deriving (Eq)
+data Step = Step String Expr deriving (Eq)
 type Substitution = [(String, Expr)]
 
 calculate :: [Law] -> Expr -> Calculation
@@ -97,3 +97,13 @@ unify s1 s2 = if compatible s1 s2 then [s1 ++ s2] else []
 compatible :: Substitution -> Substitution -> Bool
 compatible sub1 sub2
  = and [e1 == e2 | (v1, e1) <- sub1, (v2, e2) <- sub2, v1==v2] 
+
+instance Show Step where
+    show (Step s expr) = showString s "" ++ showChar ':' "" ++ showSpace "" ++ show expr
+
+instance Show Calculation where
+    show (Calc expr steps) = "Expression: " ++ show expr ++ "\nSTEPS:" ++ "\n\t" ++ (showSteps 1 steps)
+
+showSteps :: Int -> [Step] -> String
+showSteps i [e] = show i ++ ") " ++ show e
+showSteps i (e:es) = show i ++ ") " ++ show e ++ "\n\t" ++ (showSteps (i+1) es)
