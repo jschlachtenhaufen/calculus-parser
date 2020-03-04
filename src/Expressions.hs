@@ -24,7 +24,7 @@ factor = spaceAround negOrPos
 
 -- parse things like 2sin(x), or a(b+4), but not ab(12) (since that's a function)
 oplessMultiply 
-    = try (do {fac <- (constN <|> var <* "("); t <- term; return (TermOp "*" fac t)}) <|> term
+    = try (do {fac <- (constN <|> var <* lookAhead "("); t <- term; return (TermOp "*" fac t)}) <|> term
 
 term :: Parser Expr
 term = parens expr <|> termFunc <|> var <|> constN

@@ -2,7 +2,6 @@ import ExpressionTests
 import CalculationTests
 import LawTests
 
-import System.Environment
 import Test.Tasty
 
 main :: IO ()
