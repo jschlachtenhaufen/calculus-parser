@@ -21,16 +21,12 @@ Test the program with `stack test`, which takes an optional command line argumen
 First, the program will try to parse the laws from the specified file. It will then filter out all laws with expressions containing untestable functions, and attemp to test the remaining laws using leancheck. Finally, it will run our static tests, which test expression parsing and calculus solver reasoning.
 
 ## TODO 
-* pretty printing calculations
 * advanced feature:
   * `a(b+c) = ab + ac`
   * `a(b-c) = ab - ac`
   * `a^(b+c) = a^b * a^c`
 * minor parsing fixes:
-  * `parse expr 1.54`
-  * `parse expr 2sin(x)`
   * `parse a(b+c)`
   * more operators?
-* sort laws to apply in a more logical order?
-* expand tests?
+* add test cases
 * combine like terms?
