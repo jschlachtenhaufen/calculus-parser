@@ -54,6 +54,8 @@ findFreeVariables (ConstN _) = []
 findFreeVariables (TermOp _ e1 e2) = findFreeVariables e1 ++ findFreeVariables e2
 findFreeVariables (TermFunc _ es) = concatMap findFreeVariables es
 
+logB :: Int -> Int -> Int
+logB base n = floor (logBase (fromIntegral base) (fromIntegral n))
 
 unique :: [String] -> [String]
 unique = foldl (\seen x -> if x `elem` seen then seen else seen ++ [x]) []
@@ -64,7 +66,7 @@ roundN f n = (fromInteger $ round $ f * (10 ** n)) / (10.0 ** n)
 -- creates subtitutions for each free variable with a double from lean check
 createSubs :: [String] -> [Substitution]
 createSubs freeVars = sequence [[ (v, (ConstN (d::Double))) | d <- take numSamples LC.list, not (isInfinite d) ] | v <- freeVars]
-  where numSamples = TODO
+  where numSamples = logB (length freeVars) (1000)
 
 -- evaluates the expression to return a double
 evaluate :: Expr -> Double
