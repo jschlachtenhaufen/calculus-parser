@@ -37,12 +37,12 @@ isTestableExpr (TermFunc f es) = (elem f testableFunctions) && all isTestableExp
 
 -- only functions we know how to evaluate are sin, cos, ln
 testableFunctions :: [String]
-testableFunctions = ["sin", "cos", "ln"]
+testableFunctions = ["sin", "cos", "ln", "sqrt"]
 
 -- creates the test case for a given law using lean check
 createTestCase :: Law -> TestTree
 createTestCase l@(Law name (Equation (e1, e2))) = testCase (show l) $ sequence_ (
-    [ assertEqual ("'" ++ name ++ "' law failed with substitution: " ++ show sub) (roundN (evaluate (apply sub e1)) 15) (roundN (evaluate (apply sub e2)) 15)
+    [ assertEqual ("'" ++ name ++ "' law failed with substitution: " ++ show sub) (roundN (evaluate (apply sub e1)) 12) (roundN (evaluate (apply sub e2)) 12)
       | sub <- createSubs (unique (findFreeVariables e1))
     ]
   )
@@ -54,19 +54,19 @@ findFreeVariables (ConstN _) = []
 findFreeVariables (TermOp _ e1 e2) = findFreeVariables e1 ++ findFreeVariables e2
 findFreeVariables (TermFunc _ es) = concatMap findFreeVariables es
 
-logB :: Int -> Int -> Int
-logB base n = floor (logBase (fromIntegral base) (fromIntegral n))
-
 unique :: [String] -> [String]
 unique = foldl (\seen x -> if x `elem` seen then seen else seen ++ [x]) []
 
 roundN :: Double -> Double -> Double
 roundN f n = (fromInteger $ round $ f * (10 ** n)) / (10.0 ** n)
 
+nthRoot :: (Floating a1, Integral a2) => a2 -> a1 -> a1
+nthRoot n x = x ** (1 / fromIntegral n)
+
 -- creates subtitutions for each free variable with a double from lean check
 createSubs :: [String] -> [Substitution]
 createSubs freeVars = sequence [[ (v, (ConstN (d::Double))) | d <- take numSamples LC.list, not (isInfinite d) ] | v <- freeVars]
-  where numSamples = logB (length freeVars) (1000)
+  where numSamples = round (nthRoot (length freeVars) (1000::Double))
 
 -- evaluates the expression to return a double
 evaluate :: Expr -> Double
@@ -80,5 +80,6 @@ evaluate (TermOp "^" e1 e2) = evaluate e1 ** evaluate e2
 evaluate (TermFunc "sin" [arg]) = sin (evaluate arg)
 evaluate (TermFunc "cos" [arg]) = cos (evaluate arg)
 evaluate (TermFunc "ln" [arg]) = log (evaluate arg)
+evaluate (TermFunc "sqrt" [arg]) = sqrt (evaluate arg)
 evaluate (TermFunc f _) = error ("'" ++ f ++ "' takes exactly one argument")
 evaluate e = error ("unexpected expression: '" ++ show e ++ "'")
