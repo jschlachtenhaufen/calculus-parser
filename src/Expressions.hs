@@ -5,7 +5,6 @@ import Parsing
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import Text.Megaparsec.Char.Lexer (decimal, float)
-import Data.Void
 
 data Expr = 
       Var String -- x,y
@@ -23,6 +22,7 @@ factor = spaceAround negOrPos
                          ((TermOp "*" (ConstN (-1))) <$> oplessMultiply)} <|> oplessMultiply
 
 -- parse things like 2sin(x), or a(b+4), but not ab(12) (since that's a function)
+oplessMultiply :: Parser Expr
 oplessMultiply 
     = try (do {fac <- (constN <|> var <* lookAhead "("); t <- term; return (TermOp "*" fac t)}) <|> term
 
@@ -80,7 +80,10 @@ mulop =  "*" <|> "/"
 powop :: Parser String
 powop =  "^"
 
+showSpace :: ShowS
 showSpace = showChar ' '
+
+showsop :: String -> String
 showsop op = showString op ""
 
 instance Show Expr where
@@ -95,3 +98,4 @@ instance Show Expr where
 showExprs :: [Expr] -> String
 showExprs [e] = show e
 showExprs (e:es) = show e ++ showChar ',' " " ++ showExprs es
+showExprs [] = ""

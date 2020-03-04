@@ -3,6 +3,7 @@ module LawTests (genLawTests) where
 import Expressions
 import Calculation
 import Laws
+import Utility
 
 import Paths_calculus_parser
 import Text.Megaparsec
@@ -53,15 +54,6 @@ findFreeVariables (Var a) = [a]
 findFreeVariables (ConstN _) = []
 findFreeVariables (TermOp _ e1 e2) = findFreeVariables e1 ++ findFreeVariables e2
 findFreeVariables (TermFunc _ es) = concatMap findFreeVariables es
-
-unique :: [String] -> [String]
-unique = foldl (\seen x -> if x `elem` seen then seen else seen ++ [x]) []
-
-roundN :: Double -> Double -> Double
-roundN f n = (fromInteger $ round $ f * (10 ** n)) / (10.0 ** n)
-
-nthRoot :: (Floating a1, Integral a2) => a2 -> a1 -> a1
-nthRoot n x = x ** (1 / fromIntegral n)
 
 -- creates subtitutions for each free variable with a double from lean check
 createSubs :: [String] -> [Substitution]
