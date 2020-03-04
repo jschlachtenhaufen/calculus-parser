@@ -8,18 +8,12 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.LeanCheck as LC
 
-genLawTests :: [String] -> IO TestTree
-genLawTests args = do let lawsFile = getLawsFile args
-                      allLaws <- readFile lawsFile
-                      let laws = filter isTestableLaw (map parseLaw (lines allLaws))
-                      putStrLn "Parsing inputted laws:"
-                      mapM_ putStrLn (map show laws)
-                      return (testGroup "Testing laws" (map createTestCase laws))
-          
--- either returns first arg as laws file, or default file "app/laws.txt"
-getLawsFile :: [String] -> String
-getLawsFile [] = "laws.txt"
-getLawsFile args = args!!0
+genLawTests :: IO TestTree
+genLawTests = do allLaws <- readFile "laws.txt"
+                 let laws = filter isTestableLaw (map parseLaw (lines allLaws))
+                 putStrLn "Parsing inputted laws:"
+                 mapM_ putStrLn (map show laws)
+                 return (testGroup "Testing laws" (map createTestCase laws))
 
 -- attempts to parse individual law, throwing error if it can't
 parseLaw :: String -> Law
@@ -46,18 +40,25 @@ testableFunctions = ["sin", "cos", "ln"]
 createTestCase :: Law -> TestTree
 createTestCase l@(Law name (Equation (e1, e2))) = testCase (show l) $ sequence_ (
     [ assertEqual ("'" ++ name ++ "' law failed with substitution: " ++ show sub) (evaluate (apply sub e1)) (evaluate (apply sub e2)) 
-      | sub <- createSubs (findFreeVariables (e1))
+      | sub <- createSubs (unique (findFreeVariables e1))
     ]
   )
 
--- returns a list of all unique free variables in an expression
+-- returns a list of all unique free variables in an expression 
 findFreeVariables :: Expr -> [String]
-findFreeVariables _ = ["a", "b", "c"] -- TODO for real
+findFreeVariables (Var a) = [a]
+findFreeVariables (ConstN _) = []
+findFreeVariables (TermOp _ e1 e2) = findFreeVariables e1 ++ findFreeVariables e2
+findFreeVariables (TermFunc _ es) = concatMap findFreeVariables es
+
+
+unique :: [String] -> [String]
+unique = foldl (\seen x -> if x `elem` seen then seen else seen ++ [x]) []
 
 -- creates subtitutions for each free variable with a double from lean check
 createSubs :: [String] -> [Substitution]
-createSubs freeVars = [[ (v, (ConstN (d::Double))) | v <- freeVars ] | d <- take numSamples LC.list, not (isInfinite d)]
-  where numSamples = quot 200 (length freeVars)
+createSubs freeVars = sequence [[ (v, (ConstN (d::Double))) | d <- take numSamples LC.list, not (isInfinite d) ] | v <- freeVars]
+  where numSamples = fromIntegral (logBase (fromIntegral (length freeVars)) ( 200))
 
 -- evaluates the expression to return a double
 evaluate :: Expr -> Double

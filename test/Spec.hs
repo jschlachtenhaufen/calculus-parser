@@ -6,6 +6,5 @@ import System.Environment
 import Test.Tasty
 
 main :: IO ()
-main = do args <- getArgs
-          lawTests <- genLawTests args
+main = do lawTests <- genLawTests
           defaultMain (testGroup "Calculus Solver Tests" [lawTests, expressionTests, calculationTests])
