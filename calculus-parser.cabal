@@ -17,6 +17,7 @@ copyright:      2020 John Schlachtenhaufen, Ryan Blankemeier
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
+data-files: laws.txt
 extra-source-files:
     README.md
     ChangeLog.md

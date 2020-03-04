@@ -3,13 +3,16 @@ module LawTests (genLawTests) where
 import Expressions
 import Calculation
 import Laws
+
+import Paths_calculus_parser
 import Text.Megaparsec
 import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.LeanCheck as LC
 
 genLawTests :: IO TestTree
-genLawTests = do allLaws <- readFile "laws.txt"
+genLawTests = do lawsFile <- getDataFileName "laws.txt"
+                 allLaws <- readFile lawsFile
                  let laws = filter isTestableLaw (map parseLaw (lines allLaws))
                  putStrLn "Parsing inputted laws:"
                  mapM_ putStrLn (map show laws)
@@ -39,7 +42,7 @@ testableFunctions = ["sin", "cos", "ln"]
 -- creates the test case for a given law using lean check
 createTestCase :: Law -> TestTree
 createTestCase l@(Law name (Equation (e1, e2))) = testCase (show l) $ sequence_ (
-    [ assertEqual ("'" ++ name ++ "' law failed with substitution: " ++ show sub) (evaluate (apply sub e1)) (evaluate (apply sub e2)) 
+    [ assertEqual ("'" ++ name ++ "' law failed with substitution: " ++ show sub) (roundN (evaluate (apply sub e1)) 15) (roundN (evaluate (apply sub e2)) 15)
       | sub <- createSubs (unique (findFreeVariables e1))
     ]
   )
@@ -55,10 +58,13 @@ findFreeVariables (TermFunc _ es) = concatMap findFreeVariables es
 unique :: [String] -> [String]
 unique = foldl (\seen x -> if x `elem` seen then seen else seen ++ [x]) []
 
+roundN :: Double -> Double -> Double
+roundN f n = (fromInteger $ round $ f * (10 ** n)) / (10.0 ** n)
+
 -- creates subtitutions for each free variable with a double from lean check
 createSubs :: [String] -> [Substitution]
 createSubs freeVars = sequence [[ (v, (ConstN (d::Double))) | d <- take numSamples LC.list, not (isInfinite d) ] | v <- freeVars]
-  where numSamples = fromIntegral (logBase (fromIntegral (length freeVars)) ( 200))
+  where numSamples = TODO
 
 -- evaluates the expression to return a double
 evaluate :: Expr -> Double
