@@ -1,4 +1,5 @@
 addition: deriv(x, a + b) = deriv(x, a) + deriv(x, b)
+subtraction: deriv(x, a - b) = deriv(x, a) - deriv(x, b)
 product: deriv(x, a * b) = deriv(x, a) * b + deriv(x, b) * a
 quotient: deriv(x, a/b) = (deriv(x, a) * b - deriv(x, b) * a) / b^2
 sin: deriv(x, sin(a)) = deriv(x, a) * cos(a)

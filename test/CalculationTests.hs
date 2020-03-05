@@ -19,7 +19,9 @@ calculationTests = testGroup "Testing calculation reasoning"
 testLaws :: [Law]
 testLaws = map (fromJust . parseMaybe law) [
     "addition: deriv(x, a + b) = deriv(x, a) + deriv(x, b)",
+    "subtraction: deriv(x, a - b) = deriv(x, a) - deriv(x, b)",
     "product: deriv(x, a * b) = deriv(x, a) * b + deriv(x, b) * a",
+    "quotient: deriv(x, a/b) = (deriv(x, a) * b - deriv(x, b) * a) / b^2",
     "sin: deriv(x, sin(a)) = deriv(x, a) * cos(a)",
     "cos: deriv(x, cos(a)) = deriv(x, a) * -sin(a)",
     "ln: deriv(x, ln(a)) = deriv(x, a) * (1 / a)",
@@ -29,7 +31,7 @@ testLaws = map (fromJust . parseMaybe law) [
   ]
 
 sampleCases :: [(String, Calculation)]
-sampleCases = [(sampleInput1, sampleOutput1)]  
+sampleCases = [(sampleInput1, sampleOutput1), (sampleInput2, sampleOutput2), (sampleInput3, sampleOutput3)]  
 
 sampleInput1 :: String
 sampleInput1 = "deriv(x, x+y)"
@@ -38,4 +40,33 @@ sampleOutput1 :: Calculation
 sampleOutput1 = Calc (TermFunc "deriv" [(Var "x"), (TermOp "+" (Var "x") (Var "y"))]) [
     Step "addition" (TermOp "+" (TermFunc "deriv" [(Var "x"), (Var "x")]) (TermFunc "deriv" [(Var "x"), (Var "y")])),
     Step "self" (TermOp "+" (ConstN 1) (TermFunc "deriv" [(Var "x"), (Var "y")]))
+  ]
+
+sampleInput2 :: String
+sampleInput2  = "deriv(x, x^2 * sin(x))"
+
+sampleOutput2 :: Calculation
+sampleOutput2 = Calc (TermFunc "deriv" [Var "x",TermOp "*" (TermOp "^" (Var "x") (ConstN 2.0)) (TermFunc "sin" [Var "x"])]) [
+    Step "product" (TermOp "+" (TermOp "*" (TermFunc "deriv" [Var "x",TermOp "^" (Var "x") (ConstN 2.0)]) (TermFunc "sin" [Var "x"])) (TermOp "*" (TermFunc "deriv" [Var "x",TermFunc "sin" [Var "x"]]) (TermOp "^" (Var "x") (ConstN 2.0)))),
+    Step "sin" (TermOp "+" (TermOp "*" (TermFunc "deriv" [Var "x",TermOp "^" (Var "x") (ConstN 2.0)]) (TermFunc "sin" [Var "x"])) (TermOp "*" (TermOp "*" (TermFunc "deriv" [Var "x",Var "x"]) (TermFunc "cos" [Var "x"])) (TermOp "^" (Var "x") (ConstN 2.0)))),
+    Step "self" (TermOp "+" (TermOp "*" (TermFunc "deriv" [Var "x",TermOp "^" (Var "x") (ConstN 2.0)]) (TermFunc "sin" [Var "x"])) (TermOp "*" (TermOp "*" (ConstN 1.0) (TermFunc "cos" [Var "x"])) (TermOp "^" (Var "x") (ConstN 2.0)))),
+    Step "power" (TermOp "+" (TermOp "*" (TermOp "*" (TermOp "^" (Var "x") (ConstN 2.0)) (TermFunc "deriv" [Var "x",TermOp "*" (ConstN 2.0) (TermFunc "ln" [Var "x"])])) (TermFunc "sin" [Var "x"])) (TermOp "*" (TermOp "*" (ConstN 1.0) (TermFunc "cos" [Var "x"])) (TermOp "^" (Var "x") (ConstN 2.0)))),
+    Step "product" (TermOp "+" (TermOp "*" (TermOp "*" (TermOp "^" (Var "x") (ConstN 2.0)) (TermOp "+" (TermOp "*" (TermFunc "deriv" [Var "x",ConstN 2.0]) (TermFunc "ln" [Var "x"])) (TermOp "*" (TermFunc "deriv" [Var "x",TermFunc "ln" [Var "x"]]) (ConstN 2.0)))) (TermFunc "sin" [Var "x"])) (TermOp "*" (TermOp "*" (ConstN 1.0) (TermFunc "cos" [Var "x"])) (TermOp "^" (Var "x") (ConstN 2.0)))),
+    Step "ln" (TermOp "+" (TermOp "*" (TermOp "*" (TermOp "^" (Var "x") (ConstN 2.0)) (TermOp "+" (TermOp "*" (TermFunc "deriv" [Var "x",ConstN 2.0]) (TermFunc "ln" [Var "x"])) (TermOp "*" (TermOp "*" (TermFunc "deriv" [Var "x",Var "x"]) (TermOp "/" (ConstN 1.0) (Var "x"))) (ConstN 2.0)))) (TermFunc "sin" [Var "x"])) (TermOp "*" (TermOp "*" (ConstN 1.0) (TermFunc "cos" [Var "x"])) (TermOp "^" (Var "x") (ConstN 2.0)))),
+    Step "self" (TermOp "+" (TermOp "*" (TermOp "*" (TermOp "^" (Var "x") (ConstN 2.0)) (TermOp "+" (TermOp "*" (TermFunc "deriv" [Var "x",ConstN 2.0]) (TermFunc "ln" [Var "x"])) (TermOp "*" (TermOp "*" (ConstN 1.0) (TermOp "/" (ConstN 1.0) (Var "x"))) (ConstN 2.0)))) (TermFunc "sin" [Var "x"])) (TermOp "*" (TermOp "*" (ConstN 1.0) (TermFunc "cos" [Var "x"])) (TermOp "^" (Var "x") (ConstN 2.0)))),
+    Step "constants" (TermOp "+" (TermOp "*" (TermOp "*" (TermOp "^" (Var "x") (ConstN 2.0)) (TermOp "+" (TermOp "*" (ConstN 0.0) (TermFunc "ln" [Var "x"])) (TermOp "*" (TermOp "*" (ConstN 1.0) (TermOp "/" (ConstN 1.0) (Var "x"))) (ConstN 2.0)))) (TermFunc "sin" [Var "x"])) (TermOp "*" (TermOp "*" (ConstN 1.0) (TermFunc "cos" [Var "x"])) (TermOp "^" (Var "x") (ConstN 2.0))))
+  ]
+
+sampleInput3 :: String
+sampleInput3  = "deriv(x, (lambda - sin(x)) / cos(x))"
+
+sampleOutput3 :: Calculation
+sampleOutput3 = Calc (TermFunc "deriv" [Var "x",TermOp "/" (TermOp "-" (TermFunc "lambda" []) (TermFunc "sin" [Var "x"])) (TermFunc "cos" [Var "x"])]) [
+    Step "quotient" (TermOp "/" (TermOp "-" (TermOp "*" (TermFunc "deriv" [Var "x",TermOp "-" (TermFunc "lambda" []) (TermFunc "sin" [Var "x"])]) (TermFunc "cos" [Var "x"])) (TermOp "*" (TermFunc "deriv" [Var "x",TermFunc "cos" [Var "x"]]) (TermOp "-" (TermFunc "lambda" []) (TermFunc "sin" [Var "x"])))) (TermOp "^" (TermFunc "cos" [Var "x"]) (ConstN 2.0))),
+    Step "subtraction" (TermOp "/" (TermOp "-" (TermOp "*" (TermOp "-" (TermFunc "deriv" [Var "x",TermFunc "lambda" []]) (TermFunc "deriv" [Var "x",TermFunc "sin" [Var "x"]])) (TermFunc "cos" [Var "x"])) (TermOp "*" (TermFunc "deriv" [Var "x",TermFunc "cos" [Var "x"]]) (TermOp "-" (TermFunc "lambda" []) (TermFunc "sin" [Var "x"])))) (TermOp "^" (TermFunc "cos" [Var "x"]) (ConstN 2.0))),
+    Step "sin" (TermOp "/" (TermOp "-" (TermOp "*" (TermOp "-" (TermFunc "deriv" [Var "x",TermFunc "lambda" []]) (TermOp "*" (TermFunc "deriv" [Var "x",Var "x"]) (TermFunc "cos" [Var "x"]))) (TermFunc "cos" [Var "x"])) (TermOp "*" (TermFunc "deriv" [Var "x",TermFunc "cos" [Var "x"]]) (TermOp "-" (TermFunc "lambda" []) (TermFunc "sin" [Var "x"])))) (TermOp "^" (TermFunc "cos" [Var "x"]) (ConstN 2.0))),
+    Step "cos" (TermOp "/" (TermOp "-" (TermOp "*" (TermOp "-" (TermFunc "deriv" [Var "x",TermFunc "lambda" []]) (TermOp "*" (TermFunc "deriv" [Var "x",Var "x"]) (TermFunc "cos" [Var "x"]))) (TermFunc "cos" [Var "x"])) (TermOp "*" (TermOp "*" (TermFunc "deriv" [Var "x",Var "x"]) (TermOp "*" (ConstN (-1.0)) (TermFunc "sin" [Var "x"]))) (TermOp "-" (TermFunc "lambda" []) (TermFunc "sin" [Var "x"])))) (TermOp "^" (TermFunc "cos" [Var "x"]) (ConstN 2.0))),
+    Step "self" (TermOp "/" (TermOp "-" (TermOp "*" (TermOp "-" (TermFunc "deriv" [Var "x",TermFunc "lambda" []]) (TermOp "*" (ConstN 1.0) (TermFunc "cos" [Var "x"]))) (TermFunc "cos" [Var "x"])) (TermOp "*" (TermOp "*" (TermFunc "deriv" [Var "x",Var "x"]) (TermOp "*" (ConstN (-1.0)) (TermFunc "sin" [Var "x"]))) (TermOp "-" (TermFunc "lambda" []) (TermFunc "sin" [Var "x"])))) (TermOp "^" (TermFunc "cos" [Var "x"]) (ConstN 2.0))),
+    Step "self" (TermOp "/" (TermOp "-" (TermOp "*" (TermOp "-" (TermFunc "deriv" [Var "x",TermFunc "lambda" []]) (TermOp "*" (ConstN 1.0) (TermFunc "cos" [Var "x"]))) (TermFunc "cos" [Var "x"])) (TermOp "*" (TermOp "*" (ConstN 1.0) (TermOp "*" (ConstN (-1.0)) (TermFunc "sin" [Var "x"]))) (TermOp "-" (TermFunc "lambda" []) (TermFunc "sin" [Var "x"])))) (TermOp "^" (TermFunc "cos" [Var "x"]) (ConstN 2.0))),
+    Step "constants" (TermOp "/" (TermOp "-" (TermOp "*" (TermOp "-" (ConstN 0.0) (TermOp "*" (ConstN 1.0) (TermFunc "cos" [Var "x"]))) (TermFunc "cos" [Var "x"])) (TermOp "*" (TermOp "*" (ConstN 1.0) (TermOp "*" (ConstN (-1.0)) (TermFunc "sin" [Var "x"]))) (TermOp "-" (TermFunc "lambda" []) (TermFunc "sin" [Var "x"])))) (TermOp "^" (TermFunc "cos" [Var "x"]) (ConstN 2.0)))
   ]
