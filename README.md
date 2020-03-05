@@ -15,7 +15,7 @@ Our special feature is automated testing of custom laws described in [laws.txt](
 
 #### Example testable laws
 * `distrib+: a(b+c) = a*b + b*c`, which will pass
-* `distrib^: a^(b+c) = a^b * a^c`, which will fail, giving failed substitution of `(a, 0), (b, 1) ,(c, -1)`
+* `distrib^: a^(b+c) = a^b * a^c`, which will fail, giving failed substitution of `(a, 0), (b, 1), (c, -1)`
 * `factor: (a-b)^2 = a^2 -2(a*b) + b^2`, which will pass
 * `sqrt: sqrt(x^2) = x`, which will fail, giving failed substituion containing the first negative number tested
 
