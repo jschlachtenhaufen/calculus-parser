@@ -104,6 +104,7 @@ instance Show Calculation where
     show (Calc e steps) = "Expression: " ++ show e ++ "\nSTEPS:" ++ "\n\t" ++ (showSteps 1 steps)
 
 showSteps :: Int -> [Step] -> String
+showSteps i [] = show "No steps found"
 showSteps i [e] = show i ++ ") " ++ show e
 showSteps i (e:es) = show i ++ ") " ++ show e ++ "\n\t" ++ (showSteps (i+1) es)
 showSteps _ [] = "No possible steps"
