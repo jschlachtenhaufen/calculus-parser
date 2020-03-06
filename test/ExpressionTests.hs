@@ -5,9 +5,11 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Text.Megaparsec
 
+-- test group is split into verifying valid expressions parse correctly, and invalid expressions do not parse at all
 expressionTests :: TestTree
 expressionTests = testGroup "Testing expression parsing" [validExpressions, invalidExpressions]
 
+-- tuples of valid expression inputs and their expected output in terms of our Expr datatype
 validExpressionCases :: [(String, Expr)]
 validExpressionCases = [
     ("x", Var "x"),
@@ -33,6 +35,7 @@ validExpressionCases = [
     ("a(b/4)", TermOp "*" (Var "a") (TermOp "/" (Var "b") (ConstN 4)))
   ]
 
+-- compares each valid expression against its expected output, creating that many testcases in the test group
 validExpressions :: TestTree
 validExpressions = testGroup "Testing valid expressions" 
     [ testCase ("Parsing '" ++ expression ++ "'") $ 
@@ -40,6 +43,7 @@ validExpressions = testGroup "Testing valid expressions"
       | (expression, expected) <- validExpressionCases
     ]
 
+-- none of these should parse, verify they don't
 invalidExpressionCases :: [String]
 invalidExpressionCases = [
     "sin(,)",
@@ -55,6 +59,7 @@ invalidExpressionCases = [
     "ln(,x)"
   ]
 
+-- asserts that none of the invalid expressions parse, forming a test group with a test cases for each one
 invalidExpressions :: TestTree
 invalidExpressions = testGroup "Testing invalid expressions" 
     [ testCase ("Parsing '" ++ expression ++ "'") $ 

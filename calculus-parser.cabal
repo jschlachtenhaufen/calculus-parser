@@ -35,6 +35,7 @@ library
       Calculation
   other-modules:
       Paths_calculus_parser
+  ghc-options: -Wall
   hs-source-dirs:
       src
   build-depends:
