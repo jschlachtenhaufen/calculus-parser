@@ -19,7 +19,6 @@ equation = do e1 <- expr;
               e2 <- expr
               return (Equation (e1, e2))
 
-
 instance Show Law where
     show (Law s eq) = showString s "" ++ showChar ':' "" ++ showSpace "" ++ show eq
 
